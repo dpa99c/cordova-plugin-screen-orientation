@@ -28,7 +28,6 @@
 
 @implementation CDVOrientation
 
-
 -(void)handleBelowEqualIos15WithOrientationMask:(NSInteger) orientationMask viewController: (CDVViewController*) vc result:(NSMutableArray*) result selector:(SEL) selector
 {
     NSValue *value;
@@ -88,10 +87,14 @@
     }
     if (value != nil) {
         _isLocked = true;
-        UIWindowScene *scene = (UIWindowScene*)[[UIApplication.sharedApplication connectedScenes] anyObject];
-        [scene requestGeometryUpdateWithPreferences:(UIWindowSceneGeometryPreferencesIOS*)value errorHandler:^(NSError * _Nonnull error) {
-            NSLog(@"Failed to change orientation  %@ %@", error, [error userInfo]);
-        }];
+        UIWindowScene *scene = vc.view.window.windowScene;
+        if (scene == nil) {
+            NSLog(@"Unable to change orientation: CDVViewController is not attached to a UIWindowScene");
+        } else {
+            [scene requestGeometryUpdateWithPreferences:(UIWindowSceneGeometryPreferencesIOS*)value errorHandler:^(NSError * _Nonnull error) {
+                NSLog(@"Failed to change orientation  %@ %@", error, [error userInfo]);
+            }];
+        }
     } else {
         _isLocked = false;
     }
@@ -139,7 +142,7 @@
         [result addObject:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft]];
     }
     SEL selector = NSSelectorFromString(@"setSupportedOrientations:");
-    
+
     if([vc respondsToSelector:selector]) {
         if (orientationMask != 15 || [UIDevice currentDevice] == nil) {
             ((void (*)(CDVViewController*, SEL, NSMutableArray*))objc_msgSend)(vc,selector,result);
